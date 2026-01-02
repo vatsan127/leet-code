@@ -1,0 +1,594 @@
+Time Complexity - Learning Guide
+=================================
+
+What is Time Complexity?
+------------------------
+It measures how the runtime of an algorithm grows as input size (n) increases.
+We use Big O notation to describe the WORST case scenario.
+
+Think of it as: "If I double my input size, how much slower will my code run?"
+
+Big O Hierarchy (Best to Worst):
+O(1) < O(log n) < O(n) < O(n log n) < O(n²) < O(2^n) < O(n!)
+
+================================================================================
+THE THREE GOLDEN RULES
+================================================================================
+
+Rule 1: Drop Constants
+----------------------
+O(2n)   → O(n)
+O(100n) → O(n)
+O(n/2)  → O(n)
+O(5)    → O(1)
+
+WHY? Big O describes growth rate, not exact count.
+As n becomes very large (like 1 million), constants become irrelevant.
+
+EXAMPLE:
+    // This is O(3n), but we say O(n)
+    void example(int[] arr) {
+        for (int x : arr) { doSomething(); }     // n operations
+        for (int x : arr) { doSomething(); }     // n operations
+        for (int x : arr) { doSomething(); }     // n operations
+    }
+    // Total: 3n operations → O(n)
+
+VISUAL - Why constants don't matter at scale:
+    n = 10       →  2n = 20,      n = 10        (2x difference)
+    n = 1000     →  2n = 2000,    n = 1000      (2x difference)
+    n = 1000000  →  2n = 2000000, n = 1000000   (still just 2x)
+
+    The SHAPE of growth is the same - both are linear!
+
+--------------------------------------------------------------------------------
+
+Rule 2: Drop Lower Order Terms
+------------------------------
+O(n² + n)       → O(n²)
+O(n + log n)    → O(n)
+O(n³ + n² + n)  → O(n³)
+O(2^n + n²)     → O(2^n)
+
+WHY? The highest order term dominates as n grows large.
+Lower terms become insignificant in comparison.
+
+EXAMPLE:
+    void example(int[] arr) {
+        // Part 1: O(n²)
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr.length; j++) {
+                doSomething();
+            }
+        }
+
+        // Part 2: O(n)
+        for (int x : arr) {
+            doSomething();
+        }
+    }
+    // Total: O(n² + n) → O(n²)
+
+VISUAL - Why lower terms don't matter at scale:
+    n = 10:
+        n²  = 100
+        n   = 10
+        n² + n = 110  (n is 10% of total)
+
+    n = 100:
+        n²  = 10,000
+        n   = 100
+        n² + n = 10,100  (n is 1% of total)
+
+    n = 1000:
+        n²  = 1,000,000
+        n   = 1,000
+        n² + n = 1,001,000  (n is 0.1% of total)
+
+    As n grows, the n² term completely dominates!
+
+COMPARISON TABLE:
+    | n      | n       | n²          | n² + n      | % from n |
+    |--------|---------|-------------|-------------|----------|
+    | 10     | 10      | 100         | 110         | 9.1%     |
+    | 100    | 100     | 10,000      | 10,100      | 0.99%    |
+    | 1,000  | 1,000   | 1,000,000   | 1,001,000   | 0.1%     |
+    | 10,000 | 10,000  | 100,000,000 | 100,010,000 | 0.01%    |
+
+--------------------------------------------------------------------------------
+
+Rule 3: Different Inputs = Different Variables
+----------------------------------------------
+If you have TWO DIFFERENT inputs, use TWO DIFFERENT variables!
+
+WRONG:
+    void merge(int[] arr1, int[] arr2) {
+        for (int x : arr1) { }    // O(n)  ← WRONG!
+        for (int y : arr2) { }    // O(n)  ← WRONG!
+    }
+    // Total: O(n)?  ← WRONG!
+
+CORRECT:
+    void merge(int[] arr1, int[] arr2) {
+        for (int x : arr1) { }    // O(a) where a = arr1.length
+        for (int y : arr2) { }    // O(b) where b = arr2.length
+    }
+    // Total: O(a + b)  ← CORRECT!
+
+WHY? arr1 and arr2 can have completely different sizes!
+    - arr1 might have 10 elements
+    - arr2 might have 1,000,000 elements
+    - Saying O(n) for both is misleading
+
+NESTED LOOP EXAMPLE:
+    void compare(int[] arr1, int[] arr2) {
+        for (int x : arr1) {           // O(a)
+            for (int y : arr2) {       // O(b) for EACH x
+                if (x == y) return;
+            }
+        }
+    }
+    // Total: O(a × b), NOT O(n²)
+
+WHEN TO USE O(n):
+    - When there's only ONE input
+    - When multiple inputs are guaranteed to be the same size
+
+================================================================================
+Rule 4: Sequential = ADD, Nested = MULTIPLY
+================================================================================
+
+SEQUENTIAL CODE - ADD the complexities:
+    void example(int[] arr) {
+        // Block 1
+        for (int x : arr) { }         // O(n)
+
+        // Block 2
+        for (int x : arr) { }         // O(n)
+
+        // Block 3
+        Arrays.sort(arr);             // O(n log n)
+    }
+    // Total: O(n) + O(n) + O(n log n)
+    //      = O(n + n + n log n)
+    //      = O(n log n)  ← highest term wins
+
+NESTED CODE - MULTIPLY the complexities:
+    void example(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {      // O(n)
+            for (int j = 0; j < arr.length; j++) {  // O(n) for EACH i
+                doSomething();                       // O(1)
+            }
+        }
+    }
+    // Total: O(n) × O(n) × O(1) = O(n²)
+
+MIXED EXAMPLE:
+    void example(int[] arr) {
+        // Sequential block 1: O(n)
+        for (int x : arr) { doSomething(); }
+
+        // Sequential block 2: O(n²) - nested
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr.length; j++) {
+                doSomething();
+            }
+        }
+
+        // Sequential block 3: O(n)
+        for (int x : arr) { doSomething(); }
+    }
+    // Total: O(n) + O(n²) + O(n) = O(n²)
+
+================================================================================
+Rule 5: Identify What Changes
+================================================================================
+
+Ask yourself: "What variable controls how many times this runs?"
+
+EXAMPLE 1 - Depends on n:
+    for (int i = 0; i < n; i++) { }     // O(n) - runs n times
+
+EXAMPLE 2 - Constant, doesn't depend on n:
+    for (int i = 0; i < 100; i++) { }   // O(1) - always runs 100 times
+
+EXAMPLE 3 - Depends on n, but grows slowly:
+    for (int i = 1; i < n; i *= 2) { }  // O(log n) - i doubles each time
+    // n=16: i goes 1→2→4→8→16 (4 iterations = log₂16)
+
+EXAMPLE 4 - Tricky! Inner depends on outer:
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < i; j++) {   // runs 0, then 1, then 2... up to n-1
+            doSomething();
+        }
+    }
+    // Total iterations: 0 + 1 + 2 + ... + (n-1) = n(n-1)/2 = O(n²)
+
+EXAMPLE 5 - Inner is constant:
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < 5; j++) {   // always runs 5 times
+            doSomething();
+        }
+    }
+    // Total: n × 5 = O(5n) = O(n)
+
+================================================================================
+APPLYING RULES - COMPLETE EXAMPLE
+================================================================================
+
+    void complexExample(int[] arr) {
+        int n = arr.length;
+
+        // Step 1: O(n)
+        for (int x : arr) {
+            System.out.println(x);
+        }
+
+        // Step 2: O(n log n)
+        Arrays.sort(arr);
+
+        // Step 3: O(n²)
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                System.out.println(arr[i] + arr[j]);
+            }
+        }
+
+        // Step 4: O(n)
+        for (int x : arr) {
+            System.out.println(x);
+        }
+    }
+
+CALCULATION:
+    Step 1: O(n)
+    Step 2: O(n log n)
+    Step 3: O(n²)
+    Step 4: O(n)
+
+    Total = O(n) + O(n log n) + O(n²) + O(n)
+          = O(n + n log n + n² + n)
+          = O(n²)  ← Drop lower order terms, n² dominates
+
+
+================================================================================
+BASIC PATTERNS WITH EXAMPLES
+================================================================================
+
+O(1) - Constant Time
+--------------------
+Runtime doesn't change with input size.
+
+    int getFirst(int[] arr) {
+        return arr[0];           // Always 1 operation
+    }
+
+    map.get("key");              // HashMap lookup
+    arr[5] = 10;                 // Array access by index
+
+--------------------------------------------------------------------------------
+
+O(log n) - Logarithmic Time
+---------------------------
+Input is halved each iteration. Very efficient!
+
+    // Binary Search - halves search space each time
+    int binarySearch(int[] arr, int target) {
+        int left = 0, right = arr.length - 1;
+
+        while (left <= right) {              // Runs log₂(n) times
+            int mid = left + (right - left) / 2;
+            if (arr[mid] == target) return mid;
+            else if (arr[mid] < target) left = mid + 1;
+            else right = mid - 1;
+        }
+        return -1;
+    }
+
+How to recognize: Input is divided by 2 (or any constant) each iteration.
+
+Example: n = 16 → 8 → 4 → 2 → 1 (4 steps = log₂16)
+
+--------------------------------------------------------------------------------
+
+O(n) - Linear Time
+------------------
+Runtime grows directly with input size.
+
+    // Single loop through array
+    int findMax(int[] arr) {
+        int max = arr[0];
+        for (int i = 0; i < arr.length; i++) {   // Runs n times
+            if (arr[i] > max) max = arr[i];
+        }
+        return max;
+    }
+
+    // Two separate loops = O(n + n) = O(2n) = O(n)
+    void twoLoops(int[] arr) {
+        for (int x : arr) { }    // O(n)
+        for (int x : arr) { }    // O(n)
+    }                            // Total: O(n)
+
+--------------------------------------------------------------------------------
+
+O(n log n) - Linearithmic Time
+------------------------------
+Usually seen in efficient sorting algorithms.
+
+    // Merge Sort
+    void mergeSort(int[] arr, int left, int right) {
+        if (left < right) {
+            int mid = (left + right) / 2;
+            mergeSort(arr, left, mid);       // T(n/2)
+            mergeSort(arr, mid + 1, right);  // T(n/2)
+            merge(arr, left, mid, right);    // O(n)
+        }
+    }
+    // Divides log(n) times, each level does O(n) work
+    // Total: O(n log n)
+
+    Arrays.sort(arr);            // Uses dual-pivot quicksort: O(n log n)
+    Collections.sort(list);      // Uses TimSort: O(n log n)
+
+--------------------------------------------------------------------------------
+
+O(n²) - Quadratic Time
+----------------------
+Nested loops where both depend on n.
+
+    // Nested loops - classic O(n²)
+    void printPairs(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {        // Runs n times
+            for (int j = 0; j < arr.length; j++) {    // Runs n times for EACH i
+                System.out.println(arr[i] + "," + arr[j]);
+            }
+        }
+    }
+    // n * n = n²
+
+    // Bubble Sort
+    void bubbleSort(int[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            for (int j = 0; j < arr.length - 1; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    swap(arr, j, j + 1);
+                }
+            }
+        }
+    }
+
+    // Triangle pattern - still O(n²)
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < i; j++) {    // j goes up to i, not n
+            // ...
+        }
+    }
+    // 0 + 1 + 2 + ... + (n-1) = n(n-1)/2 = O(n²)
+
+--------------------------------------------------------------------------------
+
+O(2^n) - Exponential Time
+-------------------------
+Doubles with each additional input. Usually recursion with 2 branches.
+
+    // Fibonacci without memoization
+    int fib(int n) {
+        if (n <= 1) return n;
+        return fib(n - 1) + fib(n - 2);    // 2 recursive calls
+    }
+
+    // Generating all subsets
+    void subsets(int[] nums, int index, List<Integer> current) {
+        if (index == nums.length) {
+            // process current subset
+            return;
+        }
+        // Two choices: include or exclude
+        subsets(nums, index + 1, current);              // exclude
+        current.add(nums[index]);
+        subsets(nums, index + 1, current);              // include
+        current.remove(current.size() - 1);
+    }
+    // 2 choices at each of n elements = 2^n subsets
+
+--------------------------------------------------------------------------------
+
+O(n!) - Factorial Time
+----------------------
+All permutations. Extremely slow!
+
+    // Generating all permutations
+    void permute(int[] nums, int start) {
+        if (start == nums.length) {
+            // process permutation
+            return;
+        }
+        for (int i = start; i < nums.length; i++) {
+            swap(nums, start, i);
+            permute(nums, start + 1);
+            swap(nums, start, i);
+        }
+    }
+    // n choices × (n-1) choices × (n-2) × ... × 1 = n!
+
+
+================================================================================
+HOW TO ANALYZE YOUR CODE
+================================================================================
+
+Step 1: Identify the loops
+--------------------------
+    for (int i = 0; i < n; i++) { }           → O(n)
+    for (int i = 0; i < n; i += 2) { }        → O(n/2) → O(n)
+    for (int i = 1; i < n; i *= 2) { }        → O(log n)
+    for (int i = n; i > 0; i /= 2) { }        → O(log n)
+
+Step 2: Nested loops - MULTIPLY
+-------------------------------
+    for (int i = 0; i < n; i++) {             // O(n)
+        for (int j = 0; j < n; j++) {         // O(n)
+            // O(1) work
+        }
+    }
+    // Total: O(n) × O(n) = O(n²)
+
+    for (int i = 0; i < n; i++) {             // O(n)
+        for (int j = 0; j < m; j++) {         // O(m)
+            // O(1) work
+        }
+    }
+    // Total: O(n × m)
+
+Step 3: Sequential code - ADD
+-----------------------------
+    for (int i = 0; i < n; i++) { }           // O(n)
+    for (int j = 0; j < m; j++) { }           // O(m)
+    // Total: O(n + m)
+
+    for (int i = 0; i < n; i++) { }           // O(n)
+    for (int i = 0; i < n; i++) {             // O(n²)
+        for (int j = 0; j < n; j++) { }
+    }
+    // Total: O(n + n²) = O(n²)
+
+Step 4: Recursive calls
+-----------------------
+    // Single recursive call, reducing by 1
+    void func(int n) {
+        if (n <= 0) return;
+        func(n - 1);                          // O(n)
+    }
+
+    // Single recursive call, reducing by half
+    void func(int n) {
+        if (n <= 0) return;
+        func(n / 2);                          // O(log n)
+    }
+
+    // Two recursive calls, reducing by 1
+    void func(int n) {
+        if (n <= 0) return;
+        func(n - 1);
+        func(n - 1);                          // O(2^n)
+    }
+
+    // Two recursive calls, reducing by half
+    void func(int n) {
+        if (n <= 0) return;
+        func(n / 2);
+        func(n / 2);                          // O(n)
+    }
+
+
+================================================================================
+SPACE COMPLEXITY
+================================================================================
+
+What to count:
+- Variables, arrays, data structures you create
+- Recursion call stack depth
+
+    // O(1) space - only using fixed variables
+    int sum(int[] arr) {
+        int total = 0;                        // 1 variable
+        for (int x : arr) total += x;
+        return total;
+    }
+
+    // O(n) space - creating new array
+    int[] copy(int[] arr) {
+        int[] result = new int[arr.length];   // n space
+        for (int i = 0; i < arr.length; i++) {
+            result[i] = arr[i];
+        }
+        return result;
+    }
+
+    // O(n) space - HashMap
+    void countFreq(int[] arr) {
+        Map<Integer, Integer> map = new HashMap<>();  // up to n entries
+        for (int x : arr) {
+            map.put(x, map.getOrDefault(x, 0) + 1);
+        }
+    }
+
+    // O(n) space - recursion call stack
+    int factorial(int n) {
+        if (n <= 1) return 1;
+        return n * factorial(n - 1);          // n calls on stack
+    }
+
+    // O(log n) space - binary search recursion
+    int binarySearch(int[] arr, int target, int left, int right) {
+        if (left > right) return -1;
+        int mid = (left + right) / 2;
+        if (arr[mid] == target) return mid;
+        if (arr[mid] < target)
+            return binarySearch(arr, target, mid + 1, right);
+        return binarySearch(arr, target, left, mid - 1);
+    }
+    // Call stack depth = log n
+
+
+================================================================================
+COMMON PATTERNS QUICK REFERENCE
+================================================================================
+
+| Pattern              | Time       | Space  | Example Code Pattern              |
+|----------------------|------------|--------|-----------------------------------|
+| Single loop          | O(n)       | O(1)   | for (int x : arr)                 |
+| Two nested loops     | O(n²)      | O(1)   | for i { for j { } }               |
+| Two pointers         | O(n)       | O(1)   | while (left < right)              |
+| Binary search        | O(log n)   | O(1)   | while (left <= right) mid = ...   |
+| HashMap lookup       | O(n)       | O(n)   | map.put() in loop                 |
+| Sorting + scan       | O(n log n) | O(1)   | Arrays.sort() + single loop       |
+| BFS/DFS              | O(V + E)   | O(V)   | queue/stack + visited set         |
+| Sliding window       | O(n)       | O(k)   | while expanding/shrinking window  |
+| Recursion (linear)   | O(n)       | O(n)   | func(n-1)                         |
+| Recursion (binary)   | O(2^n)     | O(n)   | func(n-1) + func(n-1)             |
+| Divide & conquer     | O(n log n) | O(n)   | mergeSort style                   |
+
+
+================================================================================
+PRACTICE: ANALYZE THESE
+================================================================================
+
+Example 1:
+    for (int i = 0; i < n; i++) {
+        for (int j = i; j < n; j++) {
+            System.out.println(i + j);
+        }
+    }
+Answer: O(n²) - Triangle pattern: n + (n-1) + (n-2) + ... + 1 = n²/2
+
+Example 2:
+    for (int i = 1; i < n; i *= 2) {
+        for (int j = 0; j < n; j++) {
+            System.out.println(i + j);
+        }
+    }
+Answer: O(n log n) - Outer: log n, Inner: n
+
+Example 3:
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < 100; j++) {
+            System.out.println(i + j);
+        }
+    }
+Answer: O(n) - Inner loop is constant (100), so O(100n) = O(n)
+
+Example 4:
+    void func(int n) {
+        if (n <= 0) return;
+        System.out.println(n);
+        func(n - 1);
+        func(n - 1);
+    }
+Answer: O(2^n) - Two branches, each reducing by 1
+
+Example 5:
+    for (int i = 0; i < n; i++) {
+        binarySearch(arr, i);    // O(log n) each call
+    }
+Answer: O(n log n) - n iterations × log n per iteration
