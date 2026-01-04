@@ -43,8 +43,8 @@ The TimeComplexityNotes file contains:
 
 ### Arrays/Two Pointers
 - [x] 1. Two Sum
-- [ ] 26. Remove Duplicates from Sorted Array
-- [ ] 27. Remove Element
+- [x] 26. Remove Duplicates from Sorted Array
+- [x] 27. Remove Element
 - [ ] 88. Merge Sorted Array
 - [ ] 169. Majority Element
 - [ ] 80. Remove Duplicates from Sorted Array II
@@ -137,3 +137,22 @@ Each solution file should include:
   2. Two Pointers: O(n log n) time, O(n) space
      - O(n) create array + O(n log n) sort + O(n) traversal = O(n log n)
 - Related: 167 (sorted array), 15 (3Sum)
+
+### 26. Remove Duplicates from Sorted Array
+- File: `com.github.arrays.Problem26_RemoveDuplicatesFromSortedArray`
+- Approaches:
+  1. Two Pointers: O(n) time, O(1) space
+     - Slow pointer tracks last unique position, fast pointer scans array
+     - Key insight: sorted array means duplicates are adjacent
+  2. Alternative Two Pointers: O(n) time, O(1) space
+     - Compare adjacent elements instead of comparing with slow pointer
+- Related: 27 (remove element), 80 (allow k duplicates)
+
+### 27. Remove Element
+- File: `com.github.arrays.Problem27_RemoveElement`
+- Approaches:
+  1. Two Pointers Same Direction: O(n) time, O(1) space
+     - Slow pointer tracks valid position, fast pointer scans
+  2. Two Pointers Opposite Direction (Swap): O(n) time, O(1) space
+     - Swap with end element, minimizes moves when val is rare
+- Related: 26 (remove duplicates), 283 (move zeroes)
